@@ -335,10 +335,6 @@ SPECTACULAR_SETTINGS = {
         "defaultModelExpandDepth": 3,
         "filter": True,
     },
-    "TAGS": [
-        {"name": "auth", "description": "Endpoints de autenticação"},
-        {"name": "tasks", "description": "Gerenciamento de tarefas"},
-    ],
     "SECURITY": [{"Bearer": []}],
     "SECURITY_DEFINITIONS": {
         "Bearer": {

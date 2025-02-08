@@ -6,7 +6,7 @@ from m_task.users.api.views import UserViewSet
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 
-router.register("users", UserViewSet)
+router.register("", UserViewSet)
 
 
 app_name = "api"

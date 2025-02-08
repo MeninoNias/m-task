@@ -14,10 +14,6 @@ urlpatterns = [
     path("api/", include("config.api_router")),
     path("api/", include("m_task.oauth.api.urls")),
     path("api/", include("m_task.todo.api.urls", namespace="todo_api")),
-    # User management
-    path("users/", include("m_task.users.urls", namespace="users")),
-    # Your stuff: custom urls includes go here
-    # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
