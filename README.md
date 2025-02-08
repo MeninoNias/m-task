@@ -16,7 +16,7 @@ Para rodar a aplicação localmente com Docker, siga os passos abaixo:
 
 1. **Clone o repositório**:
    ```bash
-   git clone https://github.com/seu-usuario/m-task.git
+   git clone https://github.com/MeninoNias/m-task.git
    cd m-task
    ```
 
@@ -74,6 +74,154 @@ Para rodar a aplicação em produção, siga os passos abaixo:
 
 5. **Acesse a aplicação**:
    A aplicação estará disponível no endereço configurado no seu servidor (por exemplo, `http://seu-dominio.com`).
+
+## Deploy em Produção
+
+### Pré-requisitos
+
+- Servidor Linux com Docker e Docker Compose instalados
+- Domínio configurado apontando para o IP do servidor
+- Certificado SSL (Let's Encrypt será configurado automaticamente)
+
+### 1. Preparação do Ambiente
+
+1. **Configure as variáveis de ambiente**:
+   Crie os arquivos de ambiente em `.envs/.production/`:
+
+   ```bash
+   .envs/
+   └── .production/
+       ├── .django
+       └── .postgres
+   ```
+
+   `.django` deve conter:
+   ```env
+   DJANGO_SETTINGS_MODULE=config.settings.production
+   DJANGO_SECRET_KEY=sua-chave-secreta-aqui
+   DJANGO_ADMIN_URL=admin/
+   DJANGO_ALLOWED_HOSTS=seu-dominio.com
+   DJANGO_SERVER_EMAIL=noreply@seu-dominio.com
+   
+   # AWS
+   DJANGO_AWS_ACCESS_KEY_ID=
+   DJANGO_AWS_SECRET_ACCESS_KEY=
+   DJANGO_AWS_STORAGE_BUCKET_NAME=
+   ```
+
+   `.postgres` deve conter:
+   ```env
+   POSTGRES_HOST=postgres
+   POSTGRES_PORT=5432
+   POSTGRES_DB=m_task
+   POSTGRES_USER=seu-usuario
+   POSTGRES_PASSWORD=sua-senha-segura
+   ```
+
+2. **Configure o Traefik**:
+   Atualize o arquivo `compose/production/traefik/traefik.yml`:
+   ```yaml
+   # Altere estas configurações
+   email: 'seu-email@dominio.com'
+   rule: 'Host(`seu-dominio.com`)'
+   ```
+
+### 2. Deploy
+
+1. **Clone o repositório no servidor**:
+   ```bash
+   git clone https://github.com/seu-usuario/m-task.git
+   cd m-task
+   ```
+
+2. **Construa e inicie os containers**:
+   ```bash
+   docker-compose -f docker-compose.production.yml up --build -d
+   ```
+
+3. **Execute as migrações**:
+   ```bash
+   docker-compose -f docker-compose.production.yml exec django python manage.py migrate
+   ```
+
+4. **Colete arquivos estáticos**:
+   ```bash
+   docker-compose -f docker-compose.production.yml exec django python manage.py collectstatic --noinput
+   ```
+
+5. **Crie um superusuário**:
+   ```bash
+   docker-compose -f docker-compose.production.yml exec django python manage.py createsuperuser
+   ```
+
+### 3. Configurações de Segurança
+
+1. **Firewall**:
+   Configure o firewall permitindo apenas as portas necessárias:
+   ```bash
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+   sudo ufw enable
+   ```
+
+2. **Backup do Banco de Dados**:
+   Configure backups automáticos usando o serviço AWS:
+   ```bash
+   # Backup manual
+   docker-compose -f docker-compose.production.yml run --rm awscli upload_db_backup
+   ```
+
+### 4. Monitoramento
+
+1. **Logs dos Containers**:
+   ```bash
+   # Visualizar logs
+   docker-compose -f docker-compose.production.yml logs -f
+
+   # Logs específicos
+   docker-compose -f docker-compose.production.yml logs -f django
+   ```
+
+2. **Status dos Serviços**:
+   ```bash
+   docker-compose -f docker-compose.production.yml ps
+   ```
+
+### 5. Manutenção
+
+1. **Atualização da Aplicação**:
+   ```bash
+   git pull origin main
+   docker-compose -f docker-compose.production.yml up --build -d
+   docker-compose -f docker-compose.production.yml exec django python manage.py migrate
+   docker-compose -f docker-compose.production.yml exec django python manage.py collectstatic --noinput
+   ```
+
+2. **Backup e Restore**:
+   ```bash
+   # Backup
+   docker-compose -f docker-compose.production.yml exec postgres backup
+
+   # Restore
+   docker-compose -f docker-compose.production.yml exec postgres restore <backup-file>
+   ```
+
+### Troubleshooting
+
+1. **Verificar Logs**:
+   ```bash
+   docker-compose -f docker-compose.production.yml logs -f service_name
+   ```
+
+2. **Reiniciar Serviços**:
+   ```bash
+   docker-compose -f docker-compose.production.yml restart service_name
+   ```
+
+3. **Verificar Certificados SSL**:
+   ```bash
+   docker-compose -f docker-compose.production.yml exec traefik cat /etc/traefik/acme/acme.json
+   ```
 
 ## Detalhes do Projeto
 

@@ -12,8 +12,7 @@ urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     path("api/", include("config.api_router")),
-    path("api/", include("m_task.oauth.api.urls")),
-    path("api/", include("m_task.todo.api.urls", namespace="todo_api")),
+    path("api/", include("m_task.oauth.api.urls", namespace='auth')),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
@@ -29,6 +28,7 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
+    path('api/', include('m_task.todo.api.v1.urls', namespace='api')),
 ]
 
 if settings.DEBUG:
