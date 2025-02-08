@@ -13,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer[User]):
         model = User
         fields = [
             "id",
+            "username",
             "email",
             "name",
             "is_active",
@@ -21,6 +22,7 @@ class UserSerializer(serializers.ModelSerializer[User]):
         ]
         read_only_fields = [
             "id",
+            "username",
             "email",
             "is_active",
             "is_staff",
@@ -66,10 +68,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        username = validated_data.get('email')
         password = validated_data.pop('password')
 
         with transaction.atomic():
             user = User.objects.create_user(
+                username=username,
                 **validated_data,
             )
             user.set_password(password)
@@ -88,7 +92,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
             'user': {
-                'id': str(instance.uuid),
+                'id': str(instance.id),
                 'email': instance.email,
                 'name': instance.name,
             }

@@ -13,7 +13,7 @@ login_request_schema = inline_serializer(
 login_example = OpenApiExample(
     'Login',
     value={
-        'email': 'admin@admin.com',
+        'username': 'admin',
         'password': 'wanilda123'
     },
 )

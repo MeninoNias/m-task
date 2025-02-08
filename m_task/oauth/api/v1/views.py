@@ -1,4 +1,6 @@
-from dj_rest_auth.views import LoginView as BaseLoginView, LogoutView
+from dj_rest_auth.views import LoginView as BaseLoginView
+from dj_rest_auth.views import LogoutView
+from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
@@ -31,39 +33,45 @@ class LoginView(BaseLoginView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        """
+        Realiza login do usuário e retorna tokens JWT
+        """
+        email = request.data.get("email", "").strip()
+        username = request.data.get("username", "").strip()
+        password = request.data.get("password")
 
-        email = request.data.get("email")
-        username = request.data.get("username")
-
-        # Email takes precedence over username
-        if email:
-            username = email
-            request.data["username"] = username
-
-        elif username and not email:
-            email = username
-            request.data["email"] = username
-
-        else:
+        # Validação dos campos
+        if not (email or username):
             return Response(
-                {
-                    "error": "Email ou username é necessário",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Email ou username é necessário"},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
+        if not password:
+            return Response(
+                {"error": "Senha é necessária"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Email tem precedência sobre username
+        login = email if email else username
+        request.data["username"] = login
+
         try:
-            response = super().post(request, *args, **kwargs)
-            if response.status_code == status.HTTP_200_OK:
-                user = request.user
+            # Tenta autenticar o usuário
+            user = authenticate(username=login, password=password)
+            if not user:
+                return Response(
+                    {"error": "Credenciais inválidas"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
 
-                refresh = RefreshToken.for_user(user)
-                access = refresh.access_token
-
-                return Response({
-                    'refresh': str(refresh),
-                    'access': str(access),
-                }, status=status.HTTP_200_OK)
+            # Gera tokens JWT
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            }, status=status.HTTP_200_OK)
         except ValidationError:
             return Response(
                 {
